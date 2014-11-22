@@ -1,0 +1,181 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+  <head>
+
+    <link href="styles.css" rel="stylesheet" type="text/css" />
+    <title>USRP/GNU Octave </title>
+
+  </head>
+
+
+  <body>
+
+    <div id="intro" class="center">
+      These are tips for using GNU Radio with the USRP.  
+      <br/>
+      <br/>
+      As with everything, your miles may very.
+      Please feel free to let me know if there's something that you know and I don't because I'm
+      always looking to improve my understanding of the tools and techniques.  If you can do it
+      faster and/or better, I'd like to hear about it.
+      <br/>
+      <br/>
+      <span class="bold"> Disclaimers:</span>
+      <ul>
+        <li> This is all conceived by a computer scientist, not an electrical engineer. If some of these methods seems strange or uninformed, this is why. </li>
+      </ul>
+      
+    </div> <!-- end box -->
+
+    <br/>
+    <br/>
+
+    <div id="toc" class="center">
+      <span class="bold">Quick links:</span>
+      <ul>
+          <li> <a href="radio.html#1">3 very useful visualization tools</a></li>
+          <li> <a href="radio.html#2">"Why are these 3 utilities frozen and useless when I run them?"</a></li>
+          <li> <a href="radio.html#3">Capturing signals</a></li>
+          <li> <a href="radio.html#4">The GNU Radio Companion (GRC)</a></li>
+      </ul>
+    </div> <!-- end toc -->
+
+    <br/>
+    <br/>
+
+    <a name="1"/>
+    <div class="section center">
+      <span class="bold">Tip #1: 3 very useful visualization tools</span> 
+      <br/>
+      <br/>
+      <span class="bold">Note:</span> Read tip #2 before if having trouble with these.
+      <br/>
+      <br/>
+      The following are three graphical utilities that will allow you to scrutinize your signal(s).  They
+      are all written in Python.  
+      <ul>
+        <li>
+          The FFT (frequency domain)
+          <div class="description">
+            user> <span class="command">uhd_fft -f &lt;center frequency&gt; </span>
+          </div>
+        </li>
+        <li>
+          The oscilloscope (time domain)
+          <div class="description">
+            user> <span class="command">uhd_fft -f &lt;center frequency&gt; -S </span>
+          </div>
+        </li>
+        <li>
+          The waterfall display (time/frequency domain)
+          <div class="description">
+            user> <span class="command">uhd_fft -f &lt;center frequency&gt; -W </span>
+          </div>
+        </li>
+      </ul>
+      <br/>
+      For more options:
+      <div class="description">
+        user> <span class="command">uhd_fft -h</span>
+      </div>
+    </div>
+
+    <a name="2"/>
+    <div class="section center">
+      <span class="bold">Tip #2: "Why are these 3 utilities frozen and useless when I run them?"</span> 
+      <br/>
+      <br/>
+      Each time that I have installed this software (my first being about 5 months ago), these
+      utilities barely worked.  The graphs would work but the GUI's were unresponsive and would
+      have to be killed.
+      <br/>
+      <br/>
+      My theory for this is that the event engine that python is using (and I know nothing about python
+      or these widgets) is either being overwhelmed or starved by the other processing that the app is doing.  
+      <br/>
+      <br/>
+      <span class="bold">My solution:</span>
+      <br/>
+      <br/>
+      I was able to control this issue by explicitly using lower values for the 
+      <span class="bold">fft-size</span> and <span class="bold">fft-rate</span> at the command
+      line.
+      <div class="description">
+        user> <span class="command"> uhd_fft --fft-size=512 --fft-rate=15 -f &lt;center frequency&gt; </span>
+      </div>
+      <br/>
+      For me, this solution was a tad tedious so  I created bash aliases.
+      <div class="description">
+        user> <span class="command"> vi .bashrc </span> <br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;function fft <br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uhd_fft --fft-size=512 --fft-rate=15 ${*} <br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} <br/>
+      </div>
+      <br/>
+      All subsequent logins will be able to use this.
+      <div class="description">
+        user> <span class="command"> fft -f &lt;center frequency&gt; &lt;other arguments&gt;</span> <br/>
+      </div>
+    </div>
+
+
+
+    <a name="3"/>
+    <div class="section center">
+      <span class="bold">Tip #3: Capturing signals</span> 
+      <br/>
+      <br/>
+      <span class="bold">uhd_rx_cfile</span> is used for capturing a file from the 
+      command line.  use <span class="bold">uhd_rx_cfile -h</span> to get the full list of options.
+      The following is an example that creates a file called <span class="bold">capture.raw</span>:
+      <div class="description">
+        user> <span class="command"> uhd_rx_cfile --samp-rate=4M -f 13.56M  -N 20M capture.raw</span>
+      </div>
+      This command will capture 5 seconds worth of 13.56Mhz signal at 4Mhz sampling.
+    </div>
+
+
+    <a name="4"/>
+    <div class="section center">
+      <span class="bold">Tip #4: The GNU Radio Companion (GRC)</span> 
+      <br/>
+      <br/>
+      If you're like me, you're going to want to do as much work as possible from the command line.
+      however, for many things, GRC makes life much simpler.  I'm not going to give a tutorial but
+      am going to recommend learning it.  Check out some of the links that I supplied on the index
+      page.
+    </div>
+
+
+
+    <div id="footer" class="center">
+      Last updated: 4/27/12 <br/>
+      By: Jason Miller
+    </div>
+
+
+  </body>
+
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

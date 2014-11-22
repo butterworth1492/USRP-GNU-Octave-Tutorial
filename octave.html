@@ -1,0 +1,412 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+  <head>
+
+    <link href="styles.css" rel="stylesheet" type="text/css" />
+    <title>USRP/GNU Octave </title>
+
+  </head>
+
+
+  <body>
+
+    <div id="intro" class="center">
+      These are tips for using GNU Octave with GNU Radio.  
+      <br/>
+      <br/>
+      As with everything, your miles may very.
+      Please feel free to let me know if there's something that you know and I don't because I'm
+      always looking to improve my understanding of the tools and techniques.  If you can do it
+      faster and/or better, I'd like to hear about it.
+      <br/>
+      <br/>
+      <span class="bold"> Disclaimers:</span>
+      <ul>
+        <li> This is all conceived by a computer scientist, not an electrical engineer. If some of these methods seems strange or uninformed, this is why. </li>
+        <li> My methods and conventions may not seem consistent.  This is because, as I discover new ways of doing things, it isn't really worth the hassle to refactor/test <span class="bold">all</span> of my documentation to match it. </li>
+      </ul>
+      
+    </div> <!-- end box -->
+
+    <br/>
+    <br/>
+
+    <div id="toc" class="center">
+      <span class="bold">Quick links:</span>
+      <ul>
+          <li> <a href="octave.html#1">How to use Octave</a></li>
+          <li> <a href="octave.html#2">Reading USRP data files</a></li>
+          <li> <a href="octave.html#3">Memory management and processing</a></li>
+          <li> <a href="octave.html#4">Looking for ASK</a></li>
+          <li> <a href="octave.html#5">A very basic spectrogram</a></li>
+          <li> <a href="octave.html#6">Using FLTK instead of GNUPlot</a></li>
+          <li> <a href="octave.html#7">Looking for FSK</a></li>
+          <li> <a href="octave.html#8">Plotting frequency response</a></li>
+          <li> <a href="octave.html#appA">Appendix A: Useful functions</a></li>
+      </ul>
+    </div> <!-- end toc -->
+
+    <br/>
+    <br/>
+
+    <a name="1"/>
+    <div class="section center">
+      <span class="bold">Tip #1: How to use Octave</span> 
+      <br/>
+      <br/>
+      For anyone who's not used software like this before, it'll be a new experience.  However, for
+      those coming from the Matlab world, Octave tries to maintain itself as a drop-in replacement.
+      The syntax is nearly identical and many Matlab scripts can be run as-is through Octave.  I've
+      often looked at Matlab code on the Internet that helped me get my Octave code working.
+      <br/>
+      <br/>
+      And, for all else, there's the online Octave documentation:
+      <a href="http://www.gnu.org/software/octave/doc/interpreter/">http://www.gnu.org/software/octave/doc/interpreter/</a>
+    </div>
+
+
+
+    <a name="2"/>
+    <div class="section center">
+      <span class="bold">Tip #2: Reading USRP data files</span> 
+      <br/>
+      <br/>
+      The USRP stores captured signal values as complex I/Q pairs, all of which are 32-bit floats. <br/>
+      <div class="description">
+      I1<br/>
+      Q1<br/>
+      I2<br/>
+      Q2<br/>
+      I3<br/>
+      Q3<br/>
+      (etc)
+      </div>
+      <br/>
+      One of the Octave functions that you have access to (since you added the USRP stuff to your
+      Octave path) is <span class="bold">read_float_binary()</span>.
+      <br/>
+      <br/>
+      To read in the data from the file:<br/>
+      <div class="description">
+        octave> <span class="command">data = read_float_binary("data_file.raw");</span>
+      </div>
+      <br/>
+      You may find it useful to seperate the in-phase (I) and quadrature (Q) portions:<br/>
+      <div class="description">
+        octave> <span class="command">I = data(1:2:length(data)-1);</span><br/>
+        octave> <span class="command">Q = data(2:2:length(data));</span><br/>
+      </div>
+      <br/>
+      You can then process each seperately or create a vector of complex numbers:<br/>
+      <div class="description">
+        octave> <span class="command">C = complex(I,Q);</span>
+      </div>
+      <br/>
+      Also, you'll want to get rid of the "USRP spike".  This is the name that my colleague gave the
+      unexplained spikes in amplitude at the very beginning of the captures.
+      <div class="description">
+        octave> <span class="command">data(1:500) = [];</span>
+      </div>
+      <br/>
+      It may just be simpler to use this simple function that I wrote.  
+      <div class="description">
+        octave> <span class="command">[complex_data,N] = <a href="scripts/build_signal.m">build_signal</a>(usrp_data);</span> <br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        complex_data = complex signal <br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        N = # of samples
+      </div>
+    </div>
+
+
+
+    <a name="3"/>
+    <div class="section center">
+      <span class="bold">Tip #3: Memory management and processing</span> 
+      <br/>
+      <br/>
+      I've had very little experience using Matlab but, from what I've seen, the experience is very similar
+      between it and Octave.  One major difference that I've seen is the processing capability.  Matlab
+      appears to be able to process large data sets significantly more quickly and never seems to have
+      memory issues (again, from my limited experience).  Octave, on the other hand, appears to have
+      linear performance in that there is a direct correlation between the size of the data set and the
+      amount of processing time.  Large data sets can also cause two problems:
+      <ol>
+        <li> Octave will complain about lack of memory. </li>
+        <li> Octave, by default, uses GNURadio as its graphical plotting medium.  The two communicate through a named pipe and I have noticed that large data sets will "make that pipe blow up" and GNU Plot will not function properly in such instances.</li>
+      </ol>
+      <br/>
+      <span class="bold">My solutions:</span>
+      <br/>
+      <br/>
+      <ol>
+        <li> 
+          I work around this issue by carving up the data files into discrete units to be processed 
+          independently. I use <a href="http://www.cse.sc.edu/~mille457/usrp/scripts/make_chop_signal.m">this</a> script to do so.  It
+          works by having the user hover the mouse over the plot and enter the X coordinates into
+          the terminal and allowing each chunk to be saved individually.  Click <a href="images/make_chop.png">here</a>
+          for a picture.
+        </li>
+        <li> 
+          Down sampling. If you're wanting to do a quick check of a plot, cut down on the number
+          of samples that you're viewing on the time domain.<br/>
+          Instead of: <br/>
+          <div class="description">
+            octave> <span class="command">plot(data);</span> <br/>
+          </div>
+          Try: <br/>
+          <div class="description">
+            octave> <span class="command">data = data(1:8:length(data));</span> <br/>
+            octave> <span class="command">plot(data);</span>
+          </div>
+        </li>
+        <li> 
+          Using the FLTK described <a href="octave.html#6">here</a>.  It is not an external program and thus
+          doesn't suffer from the IPC issues that GNUPlot/Octave seem to.
+        </li>
+      </ol>
+      <br/>
+      This may seem like a touch much, but once integrated into your routine, it's not bad at all and
+      it still allows you to avoid the hefty Matlab pricetag by using a free (and ever-evolving) 
+      alternative.
+    </div>
+
+
+    <a name="4"/>
+    <div class="section center">
+      <span class="bold">Tip #4: Looking for ASK</span> 
+      <br/>
+      <br/>
+      One of the first and most useful things I learned (since it was relevent to my task at the time)
+      is how to plot a signal's magnitude while stripping out all of the data.  It was very handy in 
+      being able to identify ASK modulation.
+      <br/>
+      <br/>
+      <div class="description">
+        octave> <span class="command">C = complex(I,Q); </span> <br/>
+        octave> <span class="command">plot( abs(C) ); </span>
+      </div>
+      <br/>
+      It's just that simple.
+    </div>
+
+
+    <a name="5"/>
+    <div class="section center">
+      <span class="bold">Tip #5: A very basic spectrogram</span> 
+      <br/>
+      <br/>
+      At some point, you may need to generate a spectrogram.  Octave mirrors the Matlab functions
+      for doing so. This is a <span class="bold">very</span> basic example for doing so. 
+      <br/>
+      <br/>
+      <div class="description">
+        octave> <span class="command">data = read_float_binary("data_file.raw");</span> % Read in from file <br/>
+        octave> <span class="command">[data,N] = <a href="scripts/build_signal.m">build_signal</a>(data);</span> % Make the complex signal <br/>
+        octave> <span class="command">I = real(data);</span> % Grab in-phase component <br/>
+        octave> <span class="command">colormap("jet");</span> % Choose the color scheme <br/>
+        octave> <span class="command">colorbar("northoutside");</span> % The amplitude legend <br/>
+        octave> <span class="command">specgram( I, 1024, 4e6);</span> % Generate the spectrogram <br/>
+      </div>
+      <br/>
+      Click <a href="images/specgram.png">here</a> for an image of the output.
+      <br/>
+      <br/>
+      <a href="http://octave.sourceforge.net/signal/function/specgram.html">specgram()</a> accepts five arguments, only three of which I've used here and only one of which is required. <br/>
+      <div class="description">
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        arg1: The vector we are plotting. <br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        arg2: Size of the FFT window ( [] for default=256 ).  Practically speaking, can be used to control color "intensity". <br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        arg3: Sample rate ( [] for default=2Hz ).  Practically speaking, is used to control domain/range of axes.
+      </div>
+      <br/>
+      <a href="http://www.obihiro.ac.jp/~suzukim/masuda/octave/html/octave_137.html">colormap()</a> is used to determine the color scheme.  A list of available maps 
+      (along with other useful functions) can be found 
+      <a href="http://www.mathworks.com/help/techdoc/ref/colormap.html">here</a>.  "Jet" is the default map unless
+      specified otherwise.  
+      <br/> 
+      <br/>
+      <a href="http://www.gnu.org/software/octave/doc/interpreter/Plot-Annotations.html">colorbar()</a> is used to 
+      include/place the amplitude legend. <br/> 
+    </div>
+
+
+
+    <a name="6"/>
+    <div class="section center">
+      <span class="bold">Tip #6: Using FLTK instead of GNUPlot </span>
+      <br/>
+      <br/>
+      GNUPlot is the default plotting program for Octave.  However, the Octave community is slowly transitioning to an internal
+      OpenGL-based plotting substitute that uses <a href="http://www.fltk.org/">FLTK</a>.
+      <br/>
+      <br/>
+      <div class="description">
+        octave> <span class="command">graphics_toolkit("fltk");</span> <br/>
+      <br/>
+        This can be done from the Octave command line or specified in any of the octave config files to load by default (such
+        as ~/.octaverc).
+      </div>
+      <br/>
+      Thus far, I have found FLTK to be lacking in functionality compared to GNUPlot.  However, it plots significantly
+      faster, doesn't require any of the downsample trickery mentioned above, and supports panning (which is a huge bonus).  If you
+      have the patience, and can stand some quirks, then I'd check it out.
+    </div>
+
+
+    <a name="7"/>
+    <div class="section center">
+      <span class="bold">Tip #7: Looking for FSK</span> 
+      <br/>
+      <br/>
+      I have not yet had the opportunity to identify any FSK-modulated signals.  However, 
+      I have browsed some sample code on how to do so.  It involves looking for differences
+      in signal phase.  Unfortunately, the following code is "as provided" and un-vetted by
+      me.
+      <br/>
+      <br/>
+      <div class="description">
+        octave> <span class="command">dphi = diff(unwrap(angle(SIGNAL)));</span> <br/>
+        octave> <span class="command">plot( dphi*fs/(2*pi),'b');</span> <br/>
+        octave> <span class="command">xlabel('Sample');</span> <br/>
+        octave> <span class="command">ylabel('Inst Freq (Hz)');</span> <br/>
+      </div>
+      <br/>
+      Hope this helps.
+    </div>
+
+
+
+    <a name="8"/>
+    <div class="section center">
+      <span class="bold">Tip #8: Plotting frequency response</span> 
+      <br/>
+      <br/>
+        The ability to see the effects of a filter before applying it is very useful.
+        <a href="http://octave.sourceforge.net/octave/function/freqz.html">freqz()</a> does
+        such a thing. 
+      <br/>
+      <br/>
+      <div class="description">
+        octave> <span class="command"> Nyq = sample_rate / 2 % Nyquist rate </span> <br/> 
+        octave> <span class="command"> fL = low_frequency / Nyq; % Lower frequency </span> <br/>
+        octave> <span class="command"> fH = high_frequency / Nyq; % Higher frequency </span> <br/>
+        octave> <span class="command"> [b,a] = butter(passes, [fL fH]); % Grabbing what we need from the butterworth filter </span> <br/>
+        octave> <span class="command"> freqz(b,a,128,1000, sample_rate); % Plotting the frequency response </span> <br/>
+      </div>
+      <br/>
+      You will see a graph such as <a href="images/freqz.png">this</a> that will show you the characteristics of your filter.
+    </div>
+
+
+
+    <a name="appA"/>
+    <div class="textbox center">
+      <span class="bold">Useful functions</span> <br/>
+        I offer no warranty on these functions but they are a pretty good way to get
+        a quicker start.  <a href="scripts/example_1.m">This</a> is the most basic example and a good starter point for
+        usage.
+        <ul>
+
+          <li>
+            <a href="scripts/amplify.m">amplify()</a> <br/>
+            <div class="description"> 
+              [<a href="scripts/example_3.m">example</a>] Multiplies all signal I/Q values by a single coefficient. 
+            </div>
+          </li>
+
+          <li>
+            <a href="scripts/band_pass.m">band_pass()</a> <br/>
+            <div class="description"> 
+              [<a href="scripts/example_3.m">example</a>] Applies a pretty ideal band-pass Butterworth IIR filter to a signal.  
+            </div>
+          </li>
+
+          <li>
+            <a href="scripts/build_fft.m">build_fft()</a> <br/>
+            <div class="description"> 
+              [<a href="scripts/example_2.m">example</a> | <a href="images/example_2.png">output</a>] Builds and plots two kinds of FFTs. 
+            </div>
+          </li>
+
+          <li>
+            <a href="scripts/build_signal.m">build_signal()</a> <br/>
+            <div class="description"> 
+              [<a href="scripts/example_1.m">example</a> | <a href="images/example_1.png">output</a>] Creates a vector of complex values from a GNURadio data capture file. 
+            </div>
+          </li>
+
+          <li>
+            <a href="scripts/chop_signal.m">chop_signal()</a> <br/>
+            <div class="description"> 
+              [<a href="scripts/example_3.m">example</a>] Returns a specified portion of the entire signal. 
+            </div>
+          </li>
+
+          <li>
+            <a href="scripts/destroy_all.m">destroy_all()</a> <br/>
+            <div class="description"> 
+              [<a href="scripts/example_1.m">example</a> | <a href="images/example_1.png">output</a>] A dumb function to re-initialize the environment. 
+            </div>
+          </li>
+
+          <li>
+            <a href="scripts/high_pass.m">high_pass()</a> <br/>
+            <div class="description"> 
+              Applies a pretty ideal high-pass Butterworth IIR filter to a signal.  
+            </div>
+          </li>
+
+          <li>
+            <a href="scripts/label_plot.m">label_plot()</a> <br/>
+            <div class="description"> 
+              [<a href="scripts/example_2.m">example</a> | <a href="images/example_2.png">output</a>] A simple way to apply some basic plot labels.  
+            </div>
+          </li>
+
+          <li>
+            <a href="scripts/low_pass.m">low_pass()</a> <br/>
+            <div class="description"> 
+              Applies a pretty ideal low-pass Butterworth IIR filter to a signal.  
+            </div>
+          </li>
+
+          <li>
+            <a href="scripts/write_signal.m">write_signal()</a> <br/>
+            <div class="description"> 
+              [<a href="scripts/example_3.m">example</a>] Writes a vector of complex values to a GNURadio data file. 
+            </div>
+          </li>
+
+        </ul>
+    </div>
+
+
+    <div id="footer" class="center">
+      Last updated: 7/17/12 <br/>
+      By: Jason Miller
+    </div>
+
+
+  </body>
+
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

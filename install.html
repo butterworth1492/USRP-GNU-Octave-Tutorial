@@ -1,0 +1,274 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+  <head>
+
+    <link href="styles.css" rel="stylesheet" type="text/css" />
+    <title>USRP/GNU Octave </title>
+
+  </head>
+
+
+  <body>
+
+    <div id="intro" class="center">
+      How to install GNU Radio/Octave.  My platform of choice was Fedora Core 14 (Linux-x86)  For all
+      other platforms,you're on your own.
+      <br/>
+      <br/>
+      <span class="bold">Assumptions:</span> <br/>
+      <ul>
+        <li> You've installed FC 14. </li>
+        <li> You're up to date with all of your packages. (<span class="bold">yum update</span>)</li>
+      </ul> 
+      <br/>
+      <span class="bold">Notes:</span> <br/>
+      <ul>
+        <li> 
+          This should work with little deviation for most distros and versions (although you may need
+          to work on the package management a bit).
+        </li>
+      </ul> 
+    </div> <!-- end box -->
+
+    <br/>
+    <br/>
+
+    <div class="section center">
+      Installing GNU Octave <br/>
+    </div>
+
+    <div class="textbox center">
+      <ol>
+        <li>
+          Download the latest source tarball.<br/>
+          <div class="description"> 
+            Can be found at <a href="ftp://ftp.gnu.org/gnu/octave">ftp://ftp.gnu.org/gnu/octave</a>.
+          </div>
+          <br/>
+          <div class="description"> 
+            root> <span class="command">tar zxvf octave.[VERSION].tar.gz</span> <br/>
+            root> <span class="command">mv octave-[VERSION] /opt</span> <br/>
+            root> <span class="command">cd /opt/octave-[VERSION]</span>
+          </div>
+          <br/>
+          <div class="description"> 
+            Download the newest *.tar.gz file.
+
+            Typically, I try to stick with my linux distro's package management for installations and
+            FC14 <span class="bold">does</span> have octave but very little support for its plugins.
+            I decided, instead, since I'll be building those, I might as well build it all.  I like putting 
+            my stuff in <span class="bold">/opt</span>.  It's just a  preference.
+          </div>
+        </li>
+        <li>
+          Install pre-requisite packages with <span class="bold">yum</span>.<br/>
+          <div class="description"> 
+            root><span class="command">yum install gcc g++ gcc-c++ compat-gcc-34-g77 pcre-devel blas-devel lapack-devel ncurses-devel readline-devel fltk-devel suitesparse qhull-devel GraphicMagick-devel GraphicsMagick-c++-devel glpk-devel libcurl-devel qrupdate-devel texinfo</span>
+          </div>
+          <br/>
+          <div class="description"> 
+            Depending on the current state of your system, you may need more or less.  
+          </div>
+        </li>
+        <li>
+          Configure.<br/>
+          <div class="description"> 
+            root> <span class="command">./configure</span>
+          </div>
+          <br/>
+          <div class="description"> 
+            If you're familiar with UNIX, then you know the drill.  <span class="bold">./configure 
+            --help</span> for an exhaustive list of options.
+          </div>
+        </li>
+        <li>
+          Build.<br/>
+          <div class="description"> 
+            root> <span class="command">make</span>
+          </div>
+          <br/>
+          <div class="description"> 
+            Build Octave.
+          </div>
+        </li>
+        <li>
+          Install files in appropriate places in the filesystem. <br/>
+          <div class="description"> 
+            root> <span class="command">make install</span>
+          </div>
+          <br/>
+          <div class="description"> 
+            By default, Octave installs in <span class="bold">/usr/local/bin</span>.
+          </div>
+        </li>
+        <li>
+          <span class="bold italic">[optional]</span> Download packages. <br/>
+          <div class="description"> 
+            You can find a list of Octave packages at 
+            <a href="http://octave.sourceforge.net/packages.php">http://octave.sourceforge.net/packages.php</a>.  
+            This is where you get your functionality for signal/audio/financial/symbolic/etc processing. 
+          </div>
+          <br/>
+          <div class="description"> 
+            Download the tarball for the package(s) that you want installed.
+          </div>
+        </li>
+        <li>
+          <span class="bold italic">[optional]</span> Install packages. <br/>
+          <div class="description"> 
+            root> <span class="command">pkg install &lt;tarball&gt;</span>
+          </div>
+          <br/>
+          <div class="description"> 
+            This command is run from within octave.  It also assumes that you changed into the 
+            same directory as the tarball before you started octave.
+          </div>
+        </li>
+        <li>
+          <span class="bold italic">[optional]</span> Install <span class="bold">qtoctave</span>. <br/>
+          <div class="description"> 
+            root> <span class="command">yum -y install qtoctave</span>
+          </div>
+          <br/>
+          <div class="description"> 
+            Some folks out there absolutely insist on having their GUIs.  I'm not a GUI fan, but this
+            should scratch the itch if you absolutely need one.
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="section center">
+      Installing GNU Radio <br/>
+    </div>
+
+    <div class="textbox center">
+      <ol>
+        <li>
+          Give your non-root user <span class="bold">sudo</span> capability. <br/>
+          <div class="description"> 
+            root> <span class="command">vi /etc/sudoers</span> <br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            Uncomment the line that reads <span class="bold">%wheel  ALL=(ALL)       ALL</span> <br/>
+            root> <span class="command">vi /etc/group</span> <br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            Modify wheel group: <span class="bold">wheel:x:10:root,&lt;user&gt;</span> (do not modify that number to match this)<br/>
+          </div>
+          <br/>
+          <div class="description"> 
+            You'll be running the install as a non-privileged user.  I don't much like using sudo 
+            let alone having to but it's required to continue with this installation method.
+          </div>
+        </li>
+        <li>
+          Download <a href="http://www.sbrac.org/files/build-gnuradio">build-gnuradio</a>.<br/>
+          <div class="description"> 
+            user> <span class="command">wget http://www.sbrac.org/files/build-gnuradio</span> <br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span class="bold">yum install wget</span> if not already installed.
+          </div>
+          <br/>
+          <div class="description"> 
+            There are several methods for installing this thing.  I've done it via yum and I've built from
+            source.  In the end, I used this script.  It's also the recommended method as described
+            on the product website.  
+          </div>
+        </li>
+        <li>
+          Run the script.<br/>
+          <div class="description"> 
+            user> <span class="command">sh build-gnuradio</span> <br/>
+          </div>
+          <br/>
+          <div class="description"> 
+            Depending on hardware and network speed, this installation could take a couple of hours.  
+            I have yet to have an issue with this script and therefore can't report on workarounds
+            for potentially common problems.  The one thing that I don't particularly like about this
+            script is that it doesn't seem to have a facility for uninstalling the software.  Be forewarned.
+          </div>
+        </li>
+        <li>
+          <span class="bold italic">[optional]</span> Move the install directory <br/>
+          <div class="description"> 
+            root> <span class="command">cd ~user</span> <br/>
+            root> <span class="command">mv uhd rtl-sdr gr-osmosdr gr-baz gnuradio /opt</span> <br/>
+          </div>
+          <br/>
+          <div class="description"> 
+            I like using <span class="bold">/opt</span>.  You can choose a different destination if 
+            you'd like.  Honestly, I don't know if you even need to hang on to these directories or
+            not.  Probably not.
+          </div>
+        </li>
+        <li>
+          Set your PYTHONPATH<br/>
+          <div class="description"> 
+            root> <span class="command">vi /etc/bashrc</span> <br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            (Assuming you use <span class="bold">bash</span> <br/>
+            <span class="command">export PYTHONPATH=${PYTHONPATH}:&lt;path to add&gt;</span> <br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            This goes at the bottom of the file.  The path was reported by the script after it finished
+            running in the previous step.
+          </div>
+          <br/>
+          <div class="description"> 
+            This is necessary since most of the utilities you'll be using are written in or orchestrated
+            using <span class="bold">python</span>.  After you do this, all subsequent logins will
+            be good to go.
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="section center">
+      Setting Octave to work with USRP captures <br/>
+    </div>
+
+    <div class="textbox center">
+      <ol>
+        <li>
+          Add the USRP octave scripts to your octave path. <br/>
+          <div class="description"> 
+            root> <span class="command">vi /usr/local/share/octave/site/m/startup/octaverc</span> <br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            I have no idea whether this path will change or not. It also assumes that you moved
+            the gnuradio directory to /opt previously.<br/>
+            <span class="command">addpath("/opt/gnuradio/gnuradio-core/src/utils/")</span>
+          </div>
+          <br/>
+          <div class="description"> 
+            GNU Radio comes with some custom Octave scripts.  This will ensure that whenever you
+            start Octave, the functions defined in those scripts will be available to you.  
+          </div>
+        </li>
+      </ol>
+    </div>
+
+
+    <div id="footer" class="center">
+      Last updated: 4/27/12 <br/>
+      By: Jason Miller
+    </div>
+
+
+  </body>
+
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
